@@ -349,7 +349,7 @@ contract ERC20 is Context, IERC20, ITAX, IERC20Metadata {
             _totalSupply -= taxed_amount;
             _totalTax += taxed_amount;
         }
-        emit TaxBurn(amount);
+        emit TaxBurn(taxed_amount);
 
         return taxed_amount;
     }
