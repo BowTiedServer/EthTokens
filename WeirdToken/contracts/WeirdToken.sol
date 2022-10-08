@@ -19,6 +19,7 @@ contract WeirdToken is Context, ERC20, ERC20Burnable, ERC20Pausable {
         uint256 initialSupply,
         address owner
     ) ERC20(name, symbol, owner) {
+        // modify _mint target if you wish owner to receive all tokens
         _mint(_msgSender(), initialSupply * 10**decimals());
     }
 
