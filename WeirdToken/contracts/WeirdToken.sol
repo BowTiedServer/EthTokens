@@ -16,8 +16,9 @@ contract WeirdToken is Context, ERC20, ERC20Burnable, ERC20Pausable {
     constructor(
         string memory name,
         string memory symbol,
-        uint256 initialSupply
-    ) ERC20(name, symbol) {
+        uint256 initialSupply,
+        address owner
+    ) ERC20(name, symbol, owner) {
         _mint(_msgSender(), initialSupply * 10**decimals());
     }
 
