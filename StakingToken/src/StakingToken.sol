@@ -83,8 +83,10 @@ contract StakingToken is Context, ERC20, IStakingToken {
                     calculated_new_rewards = ((_current_stakes[_stakers[i]] *
                         total_rewards) / total_staked_tokens); // can this overflow during multiplification?
                 }
-                _current_rewards[_stakers[i]] += calculated_new_rewards; // gas intensive write
-                calculated_new_rewards_sum += calculated_new_rewards;
+                if (calculated_new_rewards > 0) {
+                    _current_rewards[_stakers[i]] += calculated_new_rewards; // gas intensive write
+                    calculated_new_rewards_sum += calculated_new_rewards;
+                }
             }
             _all_rewards += calculated_new_rewards_sum;
         }
