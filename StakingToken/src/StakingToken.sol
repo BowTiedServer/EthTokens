@@ -8,6 +8,7 @@ import "./utils/Context.sol";
 // import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 // import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 // import "@openzeppelin/contracts/utils/Context.sol";
+// import "@nomiclabs/builder/console.sol";
 import "./IStakingToken.sol";
 
 // TODO: struct StakeStore { uint40 stakeId, stakedTime, ??? } -> mapping(address => StakeStore[]) public stakeLists;
@@ -54,7 +55,7 @@ contract StakingToken is Context, ERC20, IStakingToken {
         // It is often a good idea to use 'require' to check if functions are called correctly.
         // As a second argument, you can also provide an explanation about what went wrong.
         require(_contract_owner() == _msgSender(), "!OWNER");
-        require(tx.origin == _msgSender(), "!OWNER");
+        require(tx.origin == _msgSender(), "!TX-OWNER");
         _;
     }
 
@@ -78,13 +79,10 @@ contract StakingToken is Context, ERC20, IStakingToken {
             uint256 calculated_new_rewards = 0;
             uint256 calculated_new_rewards_sum = 0;
             for (uint192 i = 0; i < _stakers.length; i++) {
-                calculated_new_rewards =
-                    (_current_stakes[_stakers[i]] / total_staked_tokens) * // can this divide introduce bug - not correct values?
-                    total_rewards;
-                if (total_rewards < calculated_new_rewards)
-                    // sum of calculated_new_rewards might be > total_rewards??
-                    calculated_new_rewards = total_rewards;
-                total_rewards -= calculated_new_rewards;
+                unchecked {
+                    calculated_new_rewards = ((_current_stakes[_stakers[i]] *
+                        total_rewards) / total_staked_tokens); // can this overflow during multiplification?
+                }
                 _current_rewards[_stakers[i]] += calculated_new_rewards; // gas intensive write
                 calculated_new_rewards_sum += calculated_new_rewards;
             }
@@ -105,7 +103,7 @@ contract StakingToken is Context, ERC20, IStakingToken {
     }
 
     function getStakedBalance() public view override returns (uint256) {
-        require(tx.origin == _msgSender(), "!OWNER");
+        require(tx.origin == _msgSender(), "!TX-OWNER");
         return _current_stakes[_msgSender()];
     }
 
@@ -128,7 +126,7 @@ contract StakingToken is Context, ERC20, IStakingToken {
         updateStakedBalances
         returns (uint256)
     {
-        require(tx.origin == _msgSender(), "!OWNER");
+        require(tx.origin == _msgSender(), "!TX-OWNER");
         return _current_rewards[_msgSender()];
     }
 
@@ -139,7 +137,7 @@ contract StakingToken is Context, ERC20, IStakingToken {
         updateStakedBalances
         returns (bool)
     {
-        require(tx.origin == _msgSender(), "!OWNER");
+        require(tx.origin == _msgSender(), "!TX-OWNER");
         if (amount > _current_rewards[_msgSender()])
             revert InsufficientRewardBalance();
         return _withdrawReward(amount, _msgSender(), _msgSender());
@@ -152,7 +150,7 @@ contract StakingToken is Context, ERC20, IStakingToken {
         updateStakedBalances
         returns (bool)
     {
-        require(tx.origin == _msgSender(), "!OWNER");
+        require(tx.origin == _msgSender(), "!TX-OWNER");
         if (amount > _current_rewards[_msgSender()])
             revert InsufficientRewardBalance();
         return _withdrawReward(amount, to, _msgSender());
